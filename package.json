@@ -1,0 +1,22 @@
+{
+  "name": "mean-todo",
+  "version": "1.0.0",
+  "description": "Todo app built with Angular 1.4",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NathanPickard/angular-basics.git"
+  },
+  "author": "Nathan Pickard <nathan.pickard87@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NathanPickard/angular-basics/issues"
+  },
+  "homepage": "https://github.com/NathanPickard/angular-basics#readme",
+  "dependencies": {
+    "express": "^4.14.1"
+  }
+}
