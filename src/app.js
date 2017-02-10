@@ -7,7 +7,6 @@ var app = express();
 
 app.use('/', express.static('public'));
 
-
 app.use('/api', router);
 
 app.listen(3000, function() {
