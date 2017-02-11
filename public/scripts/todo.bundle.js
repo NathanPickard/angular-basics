@@ -40,19 +40,31 @@ angular.module('todoListApp').service('dataService', __webpack_require__(7));
 "use strict";
 
 
-angular.module('todoListApp')
-  .controller('mainCtrl', function ($scope, dataService) {    
+function MainCtrl($scope, $log, $interval, dataService) {
 
-    dataService.getTodos(function(response) {
-      var todos = response.data.todos;
-      $scope.todos = todos;
+  // $scope.seconds = 0;
+
+  // $scope.counter = function () {
+  //   $scope.seconds++;
+  //   $log.log($scope.seconds + ' have passed!');    
+  // }
+
+  // $interval($scope.counter, 1000, 10);
+
+  dataService.getTodos(function (response) {
+    var todos = response.data.todos;
+    $scope.todos = todos;
+  });
+
+  $scope.addTodo = function () {
+    $scope.todos.unshift({
+      name: "This is a new todo.",
+      completed: false
     });
+  };
+}
 
-    $scope.addTodo = function () {
-      $scope.todos.unshift({name: "This is a new todo.",
-                              completed: false});      
-    };
-  })
+module.exports = MainCtrl;
 
 /***/ }),
 /* 5 */
@@ -61,22 +73,30 @@ angular.module('todoListApp')
 "use strict";
 
 
-angular.module('todoListApp')
-  .controller('todoCtrl', function($scope, dataService) {
-    $scope.deleteTodo = function(todo, index) {
-      $scope.todos.splice(index, 1);
-      dataService.deleteTodo(todo);
-    };
+function TodoCtrl($scope, dataService) {
 
-    $scope.saveTodos = function() {
-      var filteredTodos = $scope.todos.filter(function(todo){
-        if(todo.edited) {
-          return todo
-        };
-      })
-      dataService.saveTodos(filteredTodos);
-    };
-  });
+  $scope.deleteTodo = function (todo, index) {
+    $scope.todos.splice(index, 1);
+    dataService.deleteTodo(todo);
+  };
+
+  $scope.saveTodos = function () {
+    var filteredTodos = $scope.todos.filter(function (todo) {
+      if (todo.edited) {
+        return todo
+      };
+    })
+    dataService.saveTodos(filteredTodos)
+      .finally($scope.resetTodoState());
+  };
+
+  $scope.resetTodoState = function() {
+    $scope.todos.forEach(function(todo) {
+      todo.edited = false;
+    });
+  }
+}
+module.exports = TodoCtrl;
 
 /***/ }),
 /* 6 */
@@ -85,14 +105,15 @@ angular.module('todoListApp')
 "use strict";
 
 
-angular.module('todoListApp')
-.directive('todo', function() {
+ function ToDoDirective () {
   return {
     templateUrl: 'templates/todo.html',
     replace: true,
     controller: 'todoCtrl'
   }
-});
+}
+
+module.exports = ToDoDirective;
 
 /***/ }),
 /* 7 */
@@ -101,21 +122,42 @@ angular.module('todoListApp')
 "use strict";
 
 
-angular.module('todoListApp')
-.service('dataService', function($http) {  
-  this.getTodos = function(cb){
+function DataService($http, $q) {
+
+  this.getTodos = function (cb) {
     $http.get('/api/todos').then(cb);
   };
-  
-  this.deleteTodo = function(todo) {
-    console.log("The " + todo.name + " todo has been deleted!")
+
+  this.deleteTodo = function (todo) {
+    if (!todo._id) {
+      return $q.resolve();
+    }
+    return $http.delete('/api/todos/' + todo._id).then(function () {
+      console.log("The " + todo.name + " todo has been deleted!");
+    });
   };
-  
-  this.saveTodos = function(todos) {
-    console.log(todos.length + " todos have been saved!");
+
+  this.saveTodos = function (todos) {
+    var queue = [];
+    todos.forEach(function (todo) {
+      var request;
+      if (!todo._id) {
+        request = $http.post('/api/todos', todo)
+      } else {
+        request = $http.put('/api/todos/' + todo._id, todo).then(function (result) {
+          todo = result.data.todo;
+          return todo;
+        })
+      };
+      queue.push(request);
+    });
+    return $q.all(queue).then(function (results) {
+      console.log("I saved " + todos.length + " todos!");
+    });
   };
-  
-});
+}
+
+module.exports = DataService;
 
 /***/ }),
 /* 8 */,

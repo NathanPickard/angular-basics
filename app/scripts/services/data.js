@@ -1,17 +1,38 @@
 'use strict';
 
-angular.module('todoListApp')
-.service('dataService', function($http) {  
-  this.getTodos = function(cb){
+function DataService($http, $q) {
+
+  this.getTodos = function (cb) {
     $http.get('/api/todos').then(cb);
   };
-  
-  this.deleteTodo = function(todo) {
-    console.log("The " + todo.name + " todo has been deleted!")
+
+  this.deleteTodo = function (todo) {
+    if (!todo._id) {
+      return $q.resolve();
+    }
+    return $http.delete('/api/todos/' + todo._id).then(function () {
+      console.log("The " + todo.name + " todo has been deleted!");
+    });
   };
-  
-  this.saveTodos = function(todos) {
-    console.log(todos.length + " todos have been saved!");
+
+  this.saveTodos = function (todos) {
+    var queue = [];
+    todos.forEach(function (todo) {
+      var request;
+      if (!todo._id) {
+        request = $http.post('/api/todos', todo)
+      } else {
+        request = $http.put('/api/todos/' + todo._id, todo).then(function (result) {
+          todo = result.data.todo;
+          return todo;
+        })
+      };
+      queue.push(request);
+    });
+    return $q.all(queue).then(function (results) {
+      console.log("I saved " + todos.length + " todos!");
+    });
   };
-  
-});
+}
+
+module.exports = DataService;
